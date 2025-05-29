@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Key Management System</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .container { border: 1px solid #ddd; padding: 20px; border-radius: 5px; }
+        input[type="text"] { padding: 8px; width: 300px; }
+        button { padding: 8px 15px; background: #007bff; color: white; border: none; cursor: pointer; }
+        .key-item { background: #f9f9f9; padding: 10px; margin: 5px 0; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>KEY MANAGEMENT SYSTEM</h1>
+        
+        <!-- Form tạo key -->
+        <div>
+            <h2>Tạo Key Mới</h2>
+            <input type="text" id="newKey" placeholder="Nhập tên key...">
+            <button onclick="createKey()">Tạo Key</button>
+        </div>
+
+        <!-- Danh sách key -->
+        <div>
+            <h2>Keys Hiện Có</h2>
+            <div id="keyList"></div>
+        </div>
+    </div>
+
+    <script>
+        // Tải danh sách key khi trang load
+        window.onload = loadKeys;
+
+        async function loadKeys() {
+            const response = await fetch('keys.json');
+            const keys = await response.json();
+            
+            let html = '';
+            keys.forEach(key => {
+                html += `
+                <div class="key-item">
+                    ${key.value}
+                    <button onclick="deleteKey('${key.value}')">Xóa</button>
+                </div>`;
+            });
+            
+            document.getElementById('keyList').innerHTML = html;
+        }
+
+        async function createKey() {
+            const keyValue = document.getElementById('newKey').value.trim();
+            if(!keyValue) return alert("Vui lòng nhập key!");
+            
+            const response = await fetch('actions/create_key.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ key: keyValue })
+            });
+            
+            const result = await response.json();
+            if(result.success) {
+                loadKeys();
+                document.getElementById('newKey').value = '';
+            } else {
+                alert(result.message);
+            }
+        }
+
+        async function deleteKey(keyValue) {
+            if(!confirm(`Xóa key "${keyValue}"?`)) return;
+            
+            const response = await fetch('actions/delete_key.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ key: keyValue })
+            });
+            
+            const result = await response.json();
+            if(result.success) {
+                loadKeys();
+            } else {
+                alert(result.message);
+            }
+        }
+    </script>
+</body>
+</html>
