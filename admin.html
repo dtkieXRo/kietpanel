@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản Trị Key</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+    <script src="assets/js/script.js" defer></script>
+</head>
+<body>
+    <div class="container">
+        <h1>Quản Lý Key</h1>
+        
+        <div class="card">
+            <h2>Tạo Key Mới</h2>
+            <button id="createKeyBtn" class="btn">Tạo Key Tự Động</button>
+            <div id="newKeyResult"></div>
+        </div>
+        
+        <div class="card">
+            <h2>Danh Sách Key</h2>
+            <div id="keyList"></div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('createKeyBtn').addEventListener('click', async () => {
+            const response = await createKey();
+            if (response.success) {
+                document.getElementById('newKeyResult').innerHTML = `
+                    <div class="success">
+                        Key mới: <strong>${response.key}</strong>
+                    </div>
+                `;
+                loadKeys();
+            } else {
+                document.getElementById('newKeyResult').innerHTML = `
+                    <div class="error">Lỗi: ${response.message}</div>
+                `;
+            }
+        });
+
+        async function createKey() {
+            try {
+                const response = await fetch(`https://api.github.com/repos/${YOUR_USERNAME}/${YOUR_REPO}/dispatches`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${GITHUB_TOKEN}`,
+                        'Accept': 'application/vnd.github.v3+json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        event_type: 'create-key'
+                    })
+                });
+                
+                // Giả định thành công - trong thực tế cần xử lý kết quả từ Actions
+                return { success: true, key: "kiet_" + Math.random().toString().slice(2, 12) };
+            } catch (error) {
+                return { success: false, message: error.message };
+            }
+        }
+
+        async function loadKeys() {
+            try {
+                const response = await fetch('https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO/main/data/keys.json');
+                const keys = await response.json();
+                
+                let html = '<ul>';
+                keys.forEach(key => {
+                    html += `<li>${key.value} <button onclick="deleteKey('${key.value}')">Xóa</button></li>`;
+                });
+                html += '</ul>';
+                
+                document.getElementById('keyList').innerHTML = html;
+            } catch (error) {
+                document.getElementById('keyList').innerHTML = `<div class="error">Lỗi tải danh sách key</div>`;
+            }
+        }
+        
+        async function deleteKey(keyValue) {
+            if (confirm(`Xóa key ${keyValue}?`)) {
+                try {
+                    await fetch(`https://api.github.com/repos/${YOUR_USERNAME}/${YOUR_REPO}/dispatches`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${GITHUB_TOKEN}`,
+                            'Accept': 'application/vnd.github.v3+json',
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            event_type: 'delete-key',
+                            client_payload: {
+                                key: keyValue
+                            }
+                        })
+                    });
+                    
+                    loadKeys();
+                } catch (error) {
+                    alert('Lỗi khi xóa key: ' + error.message);
+                }
+            }
+        }
+        
+        // Tải key khi trang load
+        window.onload = loadKeys;
+    </script>
+</body>
+</html>
