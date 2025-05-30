@@ -1,0 +1,33 @@
+name: Validate Key
+
+on:
+  repository_dispatch:
+    types: [validate-key]
+
+jobs:
+  validate-key:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Validate key
+        id: validate
+        run: |
+          KEY_TO_CHECK='${{ github.event.client_payload.key }}'
+          EXISTS=$(jq --arg key "$KEY_TO_CHECK" 'any(.value == $key)' data/keys.json)
+          echo "is_valid=$EXISTS" >> $GITHUB_OUTPUT
+          
+      - name: Create response
+        run: |
+          mkdir -p response
+          echo '{
+            "success": ${{ steps.validate.outputs.is_valid }},
+            "message": "${{ steps.validate.outputs.is_valid }} ? "Valid key" : "Invalid key""
+          }' > response/validation-result.json
+          
+      - name: Upload response
+        uses: actions/upload-artifact@v3
+        with:
+          name: validation-response
+          path: response/validation-result.json
