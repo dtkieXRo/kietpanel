@@ -1,0 +1,26 @@
+name: Delete Key
+
+on:
+  repository_dispatch:
+    types: [delete-key]
+
+jobs:
+  delete-key:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Delete key
+        run: |
+          KEY_TO_DELETE='${{ github.event.client_payload.key }}'
+          jq --arg key "$KEY_TO_DELETE" 'map(select(.value != $key))' data/keys.json > temp.json
+          mv temp.json data/keys.json
+
+      - name: Commit and push changes
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add data/keys.json
+          git commit -m "Delete key: ${{ github.event.client_payload.key }}"
+          git push
