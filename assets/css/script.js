@@ -1,6 +1,6 @@
 // Tạo GitHub token tại: https://github.com/settings/tokens
 // Cần quyền: repo, workflow
-const GITHUB_TOKEN = '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';
+const GITHUB_TOKEN = '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';
 const YOUR_USERNAME = 'dtkieXRo';
 const YOUR_REPO = 'kietpanel';
 
