@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API Proxy</title>
+    <script>
+        async function handleRequest() {
+            // Lấy key từ query string
+            const urlParams = new URLSearchParams(window.location.search);
+            const key = urlParams.get('key');
+            
+            if (!key) {
+                return { success: false, message: "Thiếu tham số key" };
+            }
+            
+            try {
+                const response = await fetch(`https://api.github.com/repos/${YOUR_USERNAME}/${YOUR_REPO}/dispatches`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${GITHUB_TOKEN}`,
+                        'Accept': 'application/vnd.github.v3+json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        event_type: 'validate-key',
+                        client_payload: {
+                            key: key
+                        }
+                    })
+                });
+                
+                // Trong thực tế, bạn cần lấy kết quả từ artifact
+                // Đây chỉ là minh họa
+                const isValid = Math.random() > 0.5;
+                
+                return {
+                    success: isValid,
+                    message: isValid ? "Key hợp lệ" : "Key không hợp lệ"
+                };
+            } catch (error) {
+                return { success: false, message: "Lỗi hệ thống: " + error.message };
+            }
+        }
+        
+        // Xử lý khi truy cập trực tiếp
+        window.addEventListener('DOMContentLoaded', async () => {
+            const result = await handleRequest();
+            document.body.innerHTML = `
+                <pre>${JSON.stringify(result, null, 2)}</pre>
+            `;
+        });
+    </script>
+</head>
+<body>
+    <!-- Kết quả sẽ được hiển thị ở đây -->
+</body>
+</html>
