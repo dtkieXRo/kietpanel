@@ -1,1 +1,36 @@
+name: Create New Key
 
+on:
+  repository_dispatch:
+    types: [create-key]
+
+jobs:
+  create-key:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Generate and save key
+        id: generate-key
+        run: |
+          PREFIX="kiet_"
+          DIGITS=$(shuf -i 1000000000-9999999999 -n 1)
+          NEW_KEY="${PREFIX}${DIGITS}"
+          echo "new_key=$NEW_KEY" >> $GITHUB_OUTPUT
+
+          # Add to keys.json
+          if [ ! -f data/keys.json ]; then
+            echo '[]' > data/keys.json
+          fi
+          
+          jq --arg key "$NEW_KEY" '. += [{"value": $key, "created": "'$(date -u +"%Y-%m-%dT%H:%M:%SZ")'"}]' data/keys.json > temp.json
+          mv temp.json data/keys.json
+
+      - name: Commit and push changes
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add data/keys.json
+          git commit -m "Add new key: ${{ steps.generate-key.outputs.new_key }}"
+          git push
