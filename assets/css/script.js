@@ -2,7 +2,7 @@
 // Cần quyền: repo, workflow
 const GITHUB_TOKEN = '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';
 const YOUR_USERNAME = 'dtkieXRo';
-const YOUR_REPO = 'key-management-system';
+const YOUR_REPO = 'kietpanel';
 
 // Hàm gọi GitHub API
 async function callGitHubAPI(endpoint, method = 'GET', body = null) {
